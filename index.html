@@ -19,7 +19,7 @@
     <body>
         <svg id="s" width="1000" height="800">
           <g data-bind="foreach: bodies">
-            <circle data-bind="attr: { cx: x, cy: y, r: r }"></circle>
+            <circle data-bind="attr: { cx: pos().x, cy: pos().y, r: r }"></circle>
           </g>
         </svg>
         <script src="js/vendor/jquery-1.10.2.min.js"></script>

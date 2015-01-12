@@ -3,58 +3,71 @@
 var G = 6.673e-11;
 
 (function($, ko, window) {
+  var Point = {
+    add: function(p1, p2) {
+      return { x: p1.x + p2.x, y: p1.y + p2.y };
+    },
+    sub: function(p1, p2) {
+      return { x: p2.x - p1.x, y: p2.y - p1.y };
+    },
+    mul: function(n, p) {
+      return { x: n * p.x, y: n * p.y };
+    },
+    div: function(p, n) {
+      return { x: p.x / n, y: p.y / n };
+    },
+    magnitudeSqr: function(p) {
+      return p.x * p.x + p.y * p.y;
+    },
+    magnitude: function(p) {
+      return Math.sqrt(Point.magnitudeSqr(p));
+    },
+    distanceSqr: function(p1, p2) {
+      return Point.magnitudeSqr(Point.sub(p1, p2));
+    },
+    distance: function(p1, p2) {
+      return Math.sqrt(Point.distanceSqr(p1, p2));
+    }
+  };
+
   function Body(json) {
     var self = this;
-    self.x = ko.observable();
-    self.y = ko.observable();
+    self.pos = ko.observable();
     self.r = ko.observable();
     self.m = ko.observable();
-    self.dxdt = ko.observable();
-    self.dydt = ko.observable();
-    var fx, fy;
+    self.vel = ko.observable();
+    var force;
 
     self.define = function(json) {
-      self.x(json.x);
-      self.y(json.y);
+      self.pos(json.pos);
       self.r(json.r);
-      self.m(json.m);
-      self.dxdt(json.dxdt || 0);
-      self.dydt(json.dydt || 0);
+      self.m(json.m || json.r * json.r * json.r);
+      self.vel({ x: (json.vel || { }).x || 0, y: (json.vel || { }).y || 0 });
     };
 
     self.applyForces = function(bodies) {
-      fx = 0;
-      fy = 0;
+      force = { x: 0, y: 0 };
 
-      var x = self.x();
-      var y = self.y();
+      var pos = self.pos();
       var m = self.m();
       $.each(bodies, function(_, body) {
         if (body === self) return;
-        var dx = body.x() - x;
-        var dy = body.y() - y;
-        var d2 = (dx * dx) + (dy * dy);
-        var f = G * m * body.m() / d2;
-        var d = Math.sqrt(d2);
-        fx += f * (dx / d);
-        fy += f * (dy / d);
+        var d = Point.sub(pos, body.pos());
+        var r2 = Point.magnitudeSqr(d);
+        var n = G * m * body.m() / (r2 * Math.sqrt(r2));
+        force = Point.add(force, Point.mul(n, d));
       });
     };
 
     self.animate = function(dt) {
-      var x = self.x();
-      var y = self.y();
+      var pos = self.pos();
       var m = self.m();
-      var dxdt = self.dxdt();
-      var dydt = self.dydt();
-      var dxdt2 = fx / m;
-      var dydt2 = fy / m;
-      dxdt += dxdt2 * dt;
-      dydt += dydt2 * dt;
-      self.x(x + dxdt * dt);
-      self.y(y + dydt * dt);
-      self.dxdt(dxdt);
-      self.dydt(dydt);
+      var vel = self.vel();
+      var accel = Point.div(force, m);
+      vel = Point.add(vel, Point.mul(dt, accel));
+      pos = Point.add(pos, Point.mul(dt, vel));
+      self.vel(vel);
+      self.pos(pos);
     };
 
     if (json)
@@ -84,15 +97,13 @@ var G = 6.673e-11;
   }
 
   var viewModel = new ViewModel();
-  var sun = new Body({ x: 500, y: 500, r: 100, m: 100*100*100 });
+  var sun = new Body({ pos: { x: 500, y: 500 }, r: 100 });
   viewModel.bodies.push(sun);
 
   for (var i = 1; i < 10; i++) {
-    var planet = new Body({ x: sun.x(), y: sun.y() - sun.r() - i * 40, r: i, m: i*i*i });
-    var dx = sun.x() - planet.x();
-    var dy = sun.y() - planet.y();
-    var v = Math.sqrt(G * (sun.m() + planet.m()) / Math.sqrt((dx * dx) + (dy * dy)));
-    planet.dxdt(v);
+    var planet = new Body({ pos: { x: sun.pos().x, y: sun.pos().y - sun.r() - i * 40 }, r: i });
+    var v = Math.sqrt(G * (sun.m() + planet.m()) / Point.distance(sun.pos(), planet.pos()));
+    planet.vel({ x: v, y: 0 });
     viewModel.bodies.push(planet);
   }
 
