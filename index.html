@@ -17,8 +17,13 @@
         <script src="js/vendor/modernizr-2.6.2.min.js"></script>
     </head>
     <body>
-        <p>Hello world! This is HTML5 Boilerplate.</p>
+        <svg id="s" width="1000" height="800">
+          <g data-bind="foreach: bodies">
+            <circle data-bind="attr: { cx: x, cy: y, r: r }"></circle>
+          </g>
+        </svg>
         <script src="js/vendor/jquery-1.10.2.min.js"></script>
+        <script src="js/vendor/knockout-3.2.0.js"></script>
         <script src="js/plugins.js"></script>
         <script src="js/main.js"></script>
     </body>
