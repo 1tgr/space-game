@@ -4,11 +4,20 @@ var G = 6.673e-11;
 
 (function($, ko, window) {
   var Point = {
+    zero: function() {
+      return { x: 0, y: 0 };
+    },
     add: function(p1, p2) {
-      return { x: p1.x + p2.x, y: p1.y + p2.y };
+      var x = 0, y = 0;
+      $.each(arguments, function(_, p) {
+        x += p.x;
+        y += p.y;
+      });
+
+      return { x: x, y: y };
     },
     sub: function(p1, p2) {
-      return { x: p2.x - p1.x, y: p2.y - p1.y };
+      return { x: p1.x - p2.x, y: p1.y - p2.y };
     },
     mul: function(n, p) {
       return { x: n * p.x, y: n * p.y };
@@ -32,11 +41,22 @@ var G = 6.673e-11;
 
   function Body(json) {
     var self = this;
-    self.pos = ko.observable();
-    self.r = ko.observable();
-    self.m = ko.observable();
-    self.vel = ko.observable();
-    var force;
+    var force = Point.zero(), posPrev = Point.zero(), dtPrev = 1;
+    self.pos = ko.observable(Point.zero());
+    self.r = ko.observable(0);
+    self.m = ko.observable(0);
+
+    self.vel = ko.computed({
+      read: function() {
+        return Point.div(Point.sub(self.pos(), posPrev), dtPrev);
+      },
+      write: function(vel) {
+        posPrev = Point.sub(self.pos(), vel);
+        dtPrev = 1;
+        return vel;
+      },
+      pure: true
+    });
 
     self.define = function(json) {
       self.pos(json.pos);
@@ -46,13 +66,13 @@ var G = 6.673e-11;
     };
 
     self.applyForces = function(bodies) {
-      force = { x: 0, y: 0 };
+      force = Point.zero();
 
       var pos = self.pos();
       var m = self.m();
       $.each(bodies, function(_, body) {
         if (body === self) return;
-        var d = Point.sub(pos, body.pos());
+        var d = Point.sub(body.pos(), pos);
         var r2 = Point.magnitudeSqr(d);
         var n = G * m * body.m() / (r2 * Math.sqrt(r2));
         force = Point.add(force, Point.mul(n, d));
@@ -61,12 +81,14 @@ var G = 6.673e-11;
 
     self.animate = function(dt) {
       var pos = self.pos();
-      var vel = self.vel();
       var accel = Point.div(force, self.m());
-      vel = Point.add(vel, Point.mul(dt, accel));
-      pos = Point.add(pos, Point.mul(dt, vel));
-      self.vel(vel);
-      self.pos(pos);
+
+      // http://lonesock.net/article/verlet.html
+      // xi+1 = xi + (dti / dti-1) * (xi - xi-1) + dti * dti * a
+      self.pos(Point.add(pos, Point.mul(dt / dtPrev, Point.sub(pos, posPrev)), Point.mul(dt * dt, accel)));
+
+      posPrev = pos;
+      dtPrev = dt;
     };
 
     if (json)
