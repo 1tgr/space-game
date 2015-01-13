@@ -61,9 +61,8 @@ var G = 6.673e-11;
 
     self.animate = function(dt) {
       var pos = self.pos();
-      var m = self.m();
       var vel = self.vel();
-      var accel = Point.div(force, m);
+      var accel = Point.div(force, self.m());
       vel = Point.add(vel, Point.mul(dt, accel));
       pos = Point.add(pos, Point.mul(dt, vel));
       self.vel(vel);
@@ -84,6 +83,7 @@ var G = 6.673e-11;
 
     self.animate = function(dt) {
       var bodies = self.bodies();
+      dt *= 100000;
       $.each(bodies, function(_, body) {
         body.applyForces(bodies);
       });
@@ -101,15 +101,29 @@ var G = 6.673e-11;
   viewModel.bodies.push(sun);
 
   for (var i = 1; i < 10; i++) {
-    var planet = new Body({ pos: { x: sun.pos().x, y: sun.pos().y - sun.r() - i * 40 }, r: i });
+    var planet = new Body({ pos: Point.add(sun.pos(), { x: 0, y: -(sun.r() + i * 40) }), r: i });
     var v = Math.sqrt(G * (sun.m() + planet.m()) / Point.distance(sun.pos(), planet.pos()));
-    planet.vel({ x: v, y: 0 });
+    planet.vel(Point.add(sun.vel(), { x: v, y: 0 }));
     viewModel.bodies.push(planet);
   }
 
-  window.setInterval(function() {
-    viewModel.animate(1000);
-  }, 10);
+  var lastTimestamp;
+  function animate(timestamp) {
+    if (lastTimestamp) {
+      var dt = Math.min((timestamp - lastTimestamp) / 1000, 1);
+      var step = 0.01;
+      while (dt > step) {
+        viewModel.animate(step);
+        dt -= step;
+      }
 
+      viewModel.animate(dt);
+    }
+
+    lastTimestamp = timestamp;
+    window.requestAnimationFrame(animate);
+  }
+
+  window.requestAnimationFrame(animate);
   ko.applyBindings(viewModel);
 })($, ko, window);
