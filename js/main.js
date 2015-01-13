@@ -95,17 +95,46 @@ var G = 6.673e-11;
       self.define(json);
   }
 
-  function ViewModel(json) {
+  function ViewModel() {
     var self = this;
-    self.bodies = ko.observableArray([ ]);
+    self.bodies = ko.observable({ });
+    self.focus = ko.observable(null);
 
-    self.define = function(json) {
-      self.bodies($.map(json.bodies, function(json) { return new Body(json); }));
-    };
+    self.focusBody = ko.computed(function() {
+      var focus = self.focus();
+      if (focus)
+        return self.bodies()[focus] || null;
+      else
+        return null;
+    });
+
+    self.transform = ko.computed(function() {
+      var focus = self.focus();
+      if (!focus) return undefined;
+      var body = self.bodies()[focus];
+      var pos = body.pos();
+      return "translate(" + (-pos.x) + " " + (-pos.y) + ")";
+    });
+
+    self.names = ko.computed(function() {
+      var names = [ ];
+      $.each(self.bodies(), function(name) {
+        names.push(name);
+      });
+      return names;
+    });
+
+    self.bodiesArray = ko.computed(function() {
+      var bodies = [ ];
+      $.each(self.bodies(), function(_, body) {
+        bodies.push(body);
+      });
+      return bodies;
+    });
 
     self.animate = function(dt) {
       var bodies = self.bodies();
-      dt *= 100000;
+      dt *= 100;
       $.each(bodies, function(_, body) {
         body.applyForces(bodies);
       });
@@ -113,39 +142,58 @@ var G = 6.673e-11;
         body.animate(dt);
       });
     };
-
-    if (json)
-      self.define(json);
   }
+
+  var sunData = {
+    radius:   696342e3,
+    mass: 1988550000e21,
+    distance: 0,
+    satellites: {
+      mercury: { radius:  2439.7e3, mass:     330.20e21, distance:   57909175e3 },
+        venus: { radius:  6051.8e3, mass:    4868.50e21, distance:  108208930e3 },
+        earth: { radius:  6371.0e3, mass:    5973.60e21, distance:  149597890e3, satellites: {
+         moon: { radius:  1737.1e3, mass:      73.50e21, distance: 384399e3 }
+        } },
+         mars: { radius:  3389.5e3, mass:     641.85e21, distance:  227936640e3 },
+      jupiter: { radius: 69911.0e3, mass: 1898600.00e21, distance:  778412010e3 },
+       saturn: { radius: 58232.0e3, mass:  568460.00e21, distance: 1426725400e3 },
+       uranus: { radius: 25362.0e3, mass:   86832.00e21, distance: 2870972200e3 },
+      neptune: { radius: 24622.0e3, mass:  102430.00e21, distance: 4498252900e3 }
+    }
+  };
 
   var viewModel = new ViewModel();
-  var sun = new Body({ pos: { x: 500, y: 500 }, r: 100 });
-  viewModel.bodies.push(sun);
+  var scale = 1e-6;
 
-  for (var i = 1; i < 10; i++) {
-    var planet = new Body({ pos: Point.add(sun.pos(), { x: 0, y: -(sun.r() + i * 40) }), r: i });
-    var v = Math.sqrt(G * (sun.m() + planet.m()) / Point.distance(sun.pos(), planet.pos()));
-    planet.vel(Point.add(sun.vel(), { x: v, y: 0 }));
-    viewModel.bodies.push(planet);
-  }
+  function addSystem(sun, name, data) {
+    var sunPos = sun ? sun.pos() : Point.zero();
+    var planet = new Body();
+    planet.pos(Point.add(sunPos, { x: 0, y: -data.distance * scale }));
+    planet.r(data.radius * scale);
+    planet.m(data.mass);
 
-  var lastTimestamp;
-  function animate(timestamp) {
-    if (lastTimestamp) {
-      var dt = Math.min((timestamp - lastTimestamp) / 1000, 1);
-      var step = 0.01;
-      while (dt > step) {
-        viewModel.animate(step);
-        dt -= step;
-      }
-
-      viewModel.animate(dt);
+    if (sun) {
+      var v = Math.sqrt(G * (sun.m() + planet.m()) / Point.distance(sun.pos(), planet.pos()));
+      planet.vel(Point.add(sun.vel(), { x: v, y: 0 }));
     }
 
-    lastTimestamp = timestamp;
-    window.requestAnimationFrame(animate);
+    var b = viewModel.bodies();
+    b[name] = planet;
+    viewModel.bodies(b);
+
+    if (data.satellites) {
+      $.each(data.satellites, function(name, data) {
+        addSystem(planet, name, data);
+      });
+    }
   }
 
-  window.requestAnimationFrame(animate);
+  addSystem(null, "sun", sunData);
+  viewModel.focus("earth");
+
+  window.setInterval(function() {
+    viewModel.animate(scale * 10 / 1000);
+  }, 10);
+
   ko.applyBindings(viewModel);
 })($, ko, window);
