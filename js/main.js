@@ -39,9 +39,10 @@ var G = 6.673e-11;
     }
   };
 
-  function Body(json) {
+  function Body() {
     var self = this;
     var force = Point.zero(), posPrev = Point.zero(), dtPrev = 1;
+    self.name = ko.observable("");
     self.pos = ko.observable(Point.zero());
     self.r = ko.observable(0);
     self.m = ko.observable(0);
@@ -57,13 +58,6 @@ var G = 6.673e-11;
       },
       pure: true
     });
-
-    self.define = function(json) {
-      self.pos(json.pos);
-      self.r(json.r);
-      self.m(json.m || json.r * json.r * json.r);
-      self.vel({ x: (json.vel || { }).x || 0, y: (json.vel || { }).y || 0 });
-    };
 
     self.applyForces = function(bodies) {
       force = Point.zero();
@@ -91,8 +85,10 @@ var G = 6.673e-11;
       dtPrev = dt;
     };
 
-    if (json)
-      self.define(json);
+    self.transform = ko.computed(function() {
+      var pos = self.pos();
+      return "translate(" + pos.x + " " + pos.y + ")";
+    });
   }
 
   function ViewModel() {
@@ -134,7 +130,7 @@ var G = 6.673e-11;
 
     self.animate = function(dt) {
       var bodies = self.bodies();
-      dt *= 100;
+      dt *= 10;
       $.each(bodies, function(_, body) {
         body.applyForces(bodies);
       });
@@ -149,16 +145,21 @@ var G = 6.673e-11;
     mass: 1988550000e21,
     distance: 0,
     satellites: {
-      mercury: { radius:  2439.7e3, mass:     330.20e21, distance:   57909175e3 },
-        venus: { radius:  6051.8e3, mass:    4868.50e21, distance:  108208930e3 },
-        earth: { radius:  6371.0e3, mass:    5973.60e21, distance:  149597890e3, satellites: {
-         moon: { radius:  1737.1e3, mass:      73.50e21, distance: 384399e3 }
-        } },
-         mars: { radius:  3389.5e3, mass:     641.85e21, distance:  227936640e3 },
-      jupiter: { radius: 69911.0e3, mass: 1898600.00e21, distance:  778412010e3 },
-       saturn: { radius: 58232.0e3, mass:  568460.00e21, distance: 1426725400e3 },
-       uranus: { radius: 25362.0e3, mass:   86832.00e21, distance: 2870972200e3 },
-      neptune: { radius: 24622.0e3, mass:  102430.00e21, distance: 4498252900e3 }
+      Mercury: { radius:  2439.7e3, mass:     330.20e21, distance:   57909175e3 },
+        Venus: { radius:  6051.8e3, mass:    4868.50e21, distance:  108208930e3 },
+        Earth: { radius:  6371.0e3, mass:    5973.60e21, distance:  149597890e3, satellites: {
+         Moon: { radius:  1737.1e3, mass:      73.50e21, distance: 384399e3 }
+      } },
+         Mars: { radius:  3389.5e3, mass:     641.85e21, distance:  227936640e3 },
+      Jupiter: { radius: 69911.0e3, mass: 1898600.00e21, distance:  778412010e3, satellites: {
+              Io: { radius: 1821.3e3, mass:  8931900e16, distance:  421700e3 },
+          Europa: { radius: 1560.8e3, mass:  4800000e16, distance:  671034e3 },
+        Ganymede: { radius: 2631.2e3, mass: 14819000e16, distance: 1070412e3 },
+        Callisto: { radius: 2410.3e3, mass: 10759000e16, distance: 1882709e3 }
+      } },
+       Saturn: { radius: 58232.0e3, mass:  568460.00e21, distance: 1426725400e3 },
+       Uranus: { radius: 25362.0e3, mass:   86832.00e21, distance: 2870972200e3 },
+      Neptune: { radius: 24622.0e3, mass:  102430.00e21, distance: 4498252900e3 }
     }
   };
 
@@ -168,6 +169,7 @@ var G = 6.673e-11;
   function addSystem(sun, name, data) {
     var sunPos = sun ? sun.pos() : Point.zero();
     var planet = new Body();
+    planet.name(name);
     planet.pos(Point.add(sunPos, { x: 0, y: -data.distance * scale }));
     planet.r(data.radius * scale);
     planet.m(data.mass);
@@ -188,8 +190,8 @@ var G = 6.673e-11;
     }
   }
 
-  addSystem(null, "sun", sunData);
-  viewModel.focus("earth");
+  addSystem(null, "Sun", sunData);
+  viewModel.focus("Jupiter");
 
   window.setInterval(function() {
     viewModel.animate(scale * 10 / 1000);
