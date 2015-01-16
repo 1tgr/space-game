@@ -39,6 +39,35 @@ var G = 6.673e-11;
     }
   };
 
+  ko.bindingHandlers.transform = {
+    update: function(element, valueAccessor) {
+      var transform = ko.unwrap(valueAccessor());
+      if (!$.isArray(transform))
+        transform = [ transform ];
+
+      var parts = $.map(transform, function(t) {
+        t = ko.unwrap(t);
+
+        function format(name) {
+          var value = t[name];
+          if (!value) return null;
+          value = ko.unwrap(value);
+          if (typeof value != "number")
+          {
+            var x = ko.unwrap(value.x), y = ko.unwrap(value.y);
+            value = y == undefined ? x : x + " " + y;
+          }
+
+          return name + "(" + value + ")";
+        }
+
+        return format("translate") || format("scale");
+      });
+
+      $(element).attr("transform", parts.join(" "));
+    }
+  };
+
   function Body() {
     var self = this;
     var force = Point.zero(), posPrev = Point.zero(), dtPrev = 1;
@@ -84,32 +113,23 @@ var G = 6.673e-11;
       posPrev = pos;
       dtPrev = dt;
     };
-
-    self.transform = ko.computed(function() {
-      var pos = self.pos();
-      return "translate(" + pos.x + " " + pos.y + ")";
-    });
   }
 
   function ViewModel() {
     var self = this;
+    var zooms = [ 0.25, 0.5, 0.8, 1, 1.25, 1.5, 2 ];
     self.bodies = ko.observable({ });
     self.focus = ko.observable(null);
+    self.scale = ko.observable(1);
 
     self.focusBody = ko.computed(function() {
       var focus = self.focus();
-      if (focus)
-        return self.bodies()[focus] || null;
-      else
-        return null;
+      return focus && self.bodies()[focus];
     });
 
     self.transform = ko.computed(function() {
-      var focus = self.focus();
-      if (!focus) return undefined;
-      var body = self.bodies()[focus];
-      var pos = body.pos();
-      return "translate(" + (-pos.x) + " " + (-pos.y) + ")";
+      var body = self.focusBody();
+      return body && { translate: Point.sub(Point.zero(), body.pos()) };
     });
 
     self.names = ko.computed(function() {

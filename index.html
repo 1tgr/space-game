@@ -18,6 +18,9 @@
     </head>
     <body>
         <p>
+            <button data-bind="click: function() { scale(scale() / 2) }">Zoom Out</button>
+            <button data-bind="click: function() { scale(1) }">Reset Zoom</button>
+            <button data-bind="click: function() { scale(scale() * 2) }">Zoom In</button>
             <select data-bind="options: names, value: focus"></select>
             <!-- ko with: focusBody -->
             cx = <span data-bind="text: Math.floor(pos().x)"></span>
@@ -27,13 +30,13 @@
         </p>
         <svg xmlns="http://www.w3.org/2000/svg" id="s" width="1000" height="1000">
           <rect x="0" y="0" width="1000" height="1000" fill="#000"></rect>
-          <g transform="translate(500 500) scale(0.5)">
-            <g data-bind="foreach: bodiesArray, attr: { transform: transform }">
-              <g data-bind="attr: { transform: transform }">
+          <g data-bind="transform: [ { translate: { x: 500, y: 500 } }, { scale: $root.scale } ]">
+            <g data-bind="foreach: bodiesArray, transform: transform">
+              <g data-bind="transform: { translate: pos }">
                 <circle data-bind="attr: { r: r }" cx="0" cy="0" fill="#fff"></circle>
-                <g transform="scale(2)">
+                <g data-bind="transform: { scale: 1 / $root.scale() }">
                   <rect data-bind="visible: r() < 5" x="-7" y="-7" width="14" height="14" rx="3" ry="3" fill="none" stroke="#888"></rect>
-                  <text data-bind="attr: { y: Math.max(r() / 2, 7) + 10 }, text: name" x="0" fill="#fff" text-anchor="middle" dominant-baseline="hanging"></text>
+                  <text data-bind="attr: { y: Math.max(r() * $root.scale(), 7) + 10 }, text: name" x="0" fill="#fff" text-anchor="middle" dominant-baseline="hanging"></text>
                 </g>
               </g>
             </g>
