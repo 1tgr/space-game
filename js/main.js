@@ -165,6 +165,9 @@ var G = 6.673e-11;
     mass: 1988550000e21,
     distance: 0,
     satellites: {
+      // Radius, mass: http://en.wikipedia.org/wiki/List_of_Solar_System_objects_by_size
+      // Distance: http://en.wikipedia.org/wiki/List_of_gravitationally_rounded_objects_of_the_Solar_System
+      // Jupiter's moons: http://en.wikipedia.org/wiki/Moons_of_Jupiter
       Mercury: { radius:  2439.7e3, mass:     330.20e21, distance:   57909175e3 },
         Venus: { radius:  6051.8e3, mass:    4868.50e21, distance:  108208930e3 },
         Earth: { radius:  6371.0e3, mass:    5973.60e21, distance:  149597890e3, satellites: {
