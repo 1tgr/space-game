@@ -33,9 +33,9 @@
           <g data-bind="transform: [ { translate: { x: 500, y: 500 } }, { scale: $root.scale } ]">
             <g data-bind="foreach: bodiesArray, transform: transform">
               <g data-bind="transform: { translate: pos }">
-                <circle data-bind="attr: { r: r }" cx="0" cy="0" fill="#fff"></circle>
+                <circle data-bind="attr: { r: Math.max(r(), 1 / $root.scale()) }" cx="0" cy="0" fill="#fff"></circle>
                 <g data-bind="transform: { scale: 1 / $root.scale() }">
-                  <rect data-bind="visible: r() < 5" x="-7" y="-7" width="14" height="14" rx="3" ry="3" fill="none" stroke="#888"></rect>
+                  <rect data-bind="visible: r() * $root.scale() < 5" x="-7" y="-7" width="14" height="14" rx="3" ry="3" fill="none" stroke="#080"></rect>
                   <text data-bind="attr: { y: Math.max(r() * $root.scale(), 7) + 10 }, text: name" x="0" fill="#fff" text-anchor="middle" dominant-baseline="hanging"></text>
                 </g>
               </g>
