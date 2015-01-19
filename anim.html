@@ -24,6 +24,9 @@
           </g>
         </svg>
         <p>
+          Radius: <input data-bind="value: anim.wrapInput('input')">
+        </p>
+        <p>
           <button data-bind="click: function() { anim('output', function() { input(input() - 1) }); }">Smaller</button>
           <button data-bind="click: function() { anim('output', function() { input(1) }); }">Reset</button>
           <button data-bind="click: function() { anim('output', function() { input(input() + 1) }, 2); }">Bigger</button>
@@ -53,8 +56,8 @@
             self.debug = ko.computed(function() {
               var names = [ ];
               var now = new Date();
-              $.each(self.anim.interpolators(), function(name, interp) {
-                names.push(name + " @ " + interp.t() + ", " + (now - interp.startTime));
+              $.each(self.anim.animators(), function(name, anim) {
+                names.push(name + " @ " + anim.t() + ", " + (now - anim.startTime));
               });
               return names;
             });
