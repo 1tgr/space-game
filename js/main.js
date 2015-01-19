@@ -122,16 +122,19 @@ var G = 6.673e-11 * scale * scale;
     self.bodies = ko.observable({ });
     self.focus = ko.observable(null);
     self.scale = ko.observable(1);
+    self.anim = anim.animator(self);
 
     self.focusBody = ko.computed(function() {
       var focus = self.focus();
       return focus && self.bodies()[focus];
     });
 
-    self.transform = ko.computed(function() {
+    self.translate = ko.computed(function() {
       var body = self.focusBody();
-      return body && { translate: Point.sub(Point.zero(), body.pos()) };
+      return body && Point.sub(Point.zero(), body.pos());
     });
+
+    self.anim.interpolator("translate", anim.linear2D);
 
     self.names = ko.computed(function() {
       var names = [ ];
@@ -150,6 +153,8 @@ var G = 6.673e-11 * scale * scale;
     });
 
     self.animate = function(dt) {
+      self.anim.animate(dt);
+
       var bodies = self.bodies();
       dt *= 10;
       $.each(bodies, function(_, body) {

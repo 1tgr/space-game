@@ -21,7 +21,7 @@
             <button data-bind="click: function() { scale(scale() / 2) }">Zoom Out</button>
             <button data-bind="click: function() { scale(1) }">Reset Zoom</button>
             <button data-bind="click: function() { scale(scale() * 2) }">Zoom In</button>
-            <select data-bind="options: names, value: focus"></select>
+            <select data-bind="options: names, value: anim.wrapInput('focus', 'translate', 0.1)"></select>
             <!-- ko with: focusBody -->
             cx = <span data-bind="text: Math.floor(pos().x)"></span>
             cy = <span data-bind="text: Math.floor(pos().y)"></span>
@@ -31,7 +31,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" id="s" width="1000" height="1000">
           <rect x="0" y="0" width="1000" height="1000" fill="#000"></rect>
           <g data-bind="transform: [ { translate: { x: 500, y: 500 } }, { scale: $root.scale } ]">
-            <g data-bind="foreach: bodiesArray, transform: transform">
+            <g data-bind="foreach: bodiesArray, transform: { translate: anim('translate') }">
               <g data-bind="transform: { translate: pos }">
                 <circle data-bind="attr: { r: Math.max(r(), 1 / $root.scale()) }" cx="0" cy="0" fill="#fff"></circle>
                 <g data-bind="transform: { scale: 1 / $root.scale() }">
@@ -45,6 +45,7 @@
         <script src="js/vendor/jquery-1.10.2.min.js"></script>
         <script src="js/vendor/knockout-3.2.0.js"></script>
         <script src="js/plugins.js"></script>
+        <script src="js/anim.js"></script>
         <script src="js/main.js"></script>
     </body>
 </html>
