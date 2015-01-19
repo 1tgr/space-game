@@ -1,6 +1,7 @@
 "use strict";
 
-var G = 6.673e-11;
+var scale = 1e-6;
+var G = 6.673e-11 * scale * scale;
 
 (function($, ko, window) {
   var Point = {
@@ -187,7 +188,6 @@ var G = 6.673e-11;
   };
 
   var viewModel = new ViewModel();
-  var scale = 1e-6;
 
   function addSystem(sun, name, data) {
     var sunPos = sun ? sun.pos() : Point.zero();
@@ -217,7 +217,7 @@ var G = 6.673e-11;
   viewModel.focus("Jupiter");
 
   window.setInterval(function() {
-    viewModel.animate(scale * 10 / 1000);
+    viewModel.animate(10 / 1000);
   }, 10);
 
   ko.applyBindings(viewModel);
