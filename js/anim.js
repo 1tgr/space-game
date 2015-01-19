@@ -4,7 +4,7 @@
     return (1 - t) * startValue + t * endValue;
   }
 
-  function Animator(startValue, endValue, options) {
+  function Animator(startValue, endAccessor, options) {
     var self = this;
     var speed = 1 / (options.seconds || 1);
     var atEnd = options.atEnd;
@@ -19,6 +19,7 @@
 
     self.value = ko.computed(function () {
       var t = self.t();
+      var endValue = endAccessor.peek();
       if (t >= 1) {
         atEnd();
         return endValue;
@@ -53,8 +54,7 @@
       var valueBefore = obsBefore();
       commit();
 
-      var valueAfter = owner[name]();
-      animators[name] = new Animator(valueBefore, valueAfter, {
+      animators[name] = new Animator(valueBefore, owner[name], {
         seconds: seconds,
         func: interpolators[name],
         atEnd: function () {
@@ -76,13 +76,13 @@
       });
     };
 
-    anim.wrapInput = function(name1, name2) {
+    anim.wrapInput = function(name1, name2, seconds) {
       return ko.computed({
         read: owner[name1],
         write: function(value) {
           anim(name2, function() {
             owner[name1](value);
-          });
+          }, seconds);
         }
       });
     };
