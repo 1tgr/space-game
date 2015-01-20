@@ -21,7 +21,7 @@
             <button data-bind="click: function() { scale(scale() / 2) }">Zoom Out</button>
             <button data-bind="click: function() { scale(1) }">Reset Zoom</button>
             <button data-bind="click: function() { scale(scale() * 2) }">Zoom In</button>
-            <select data-bind="options: names, value: anim.wrapInput('focus', 'translate', 0.1)"></select>
+            <select data-bind="options: names, value: anim.wrapInput('focus', 'translate')"></select>
             <!-- ko with: focusBody -->
             cx = <span data-bind="text: Math.floor(pos().x)"></span>
             cy = <span data-bind="text: Math.floor(pos().y)"></span>

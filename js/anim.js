@@ -4,6 +4,13 @@
     return (1 - t) * startValue + t * endValue;
   }
 
+  function easeInOutQuad1D(startValue, endValue, t) {
+    t *= 2;
+    var c = endValue - startValue;
+    if (t < 1) return c/2*t*t + startValue;
+		return -c/2 * ((--t)*(t-2) - 1) + startValue;
+  }
+
   function Animator(startValue, endAccessor, options) {
     var self = this;
     var speed = 1 / (options.seconds || 1);
@@ -32,11 +39,26 @@
   window.anim = { };
 
   window.anim.linear1D = linear1D;
+  window.anim.easeInOutQuad1D = easeInOutQuad1D;
 
   window.anim.linear2D = function(startPos, endPos, t) {
     return {
       x: linear1D(startPos.x, endPos.x, t),
       y: linear1D(startPos.y, endPos.y, t)
+    };
+  };
+
+  window.anim.easeInOutQuad1D = function(startValue, endValue, t) {
+    t *= 2;
+    var c = endValue - startValue;
+    if (t < 1) return c/2*t*t + startValue;
+		return -c/2 * ((--t)*(t-2) - 1) + startValue;
+  };
+
+  window.anim.easeInOutQuad2D = function(startPos, endPos, t) {
+    return {
+      x: easeInOutQuad1D(startPos.x, endPos.x, t),
+      y: easeInOutQuad1D(startPos.y, endPos.y, t)
     };
   };
 
