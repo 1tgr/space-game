@@ -134,7 +134,7 @@ var G = 6.673e-11 * scale * scale;
       return body && Point.sub(Point.zero(), body.pos());
     });
 
-    self.anim.interpolator("translate", anim.easeInOutQuad2D);
+    self.anim.easing("translate", "easeInOutQuad");
 
     self.names = ko.computed(function() {
       var names = [ ];

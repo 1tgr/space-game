@@ -1,14 +1,7 @@
 "use strict";
-(function(window) {
+(function(window, $) {
   function linear1D(startValue, endValue, t) {
     return (1 - t) * startValue + t * endValue;
-  }
-
-  function easeInOutQuad1D(startValue, endValue, t) {
-    t *= 2;
-    var c = endValue - startValue;
-    if (t < 1) return c/2*t*t + startValue;
-		return -c/2 * ((--t)*(t-2) - 1) + startValue;
   }
 
   function Animator(startValue, endAccessor, options) {
@@ -16,6 +9,16 @@
     var speed = 1 / (options.seconds || 1);
     var atEnd = options.atEnd;
     var func = options.func || linear1D;
+
+    if (startValue.x !== undefined && startValue.y !== undefined) {
+      var linearFunc = func;
+      func = function(startPos, endPos, t) {
+        return {
+          x: linearFunc(startPos.x, endPos.x, t),
+          y: linearFunc(startPos.y, endPos.y, t)
+        };
+      };
+    }
 
     self.t = ko.observable(0);
     self.startTime = new Date();
@@ -38,32 +41,8 @@
 
   window.anim = { };
 
-  window.anim.linear1D = linear1D;
-  window.anim.easeInOutQuad1D = easeInOutQuad1D;
-
-  window.anim.linear2D = function(startPos, endPos, t) {
-    return {
-      x: linear1D(startPos.x, endPos.x, t),
-      y: linear1D(startPos.y, endPos.y, t)
-    };
-  };
-
-  window.anim.easeInOutQuad1D = function(startValue, endValue, t) {
-    t *= 2;
-    var c = endValue - startValue;
-    if (t < 1) return c/2*t*t + startValue;
-		return -c/2 * ((--t)*(t-2) - 1) + startValue;
-  };
-
-  window.anim.easeInOutQuad2D = function(startPos, endPos, t) {
-    return {
-      x: easeInOutQuad1D(startPos.x, endPos.x, t),
-      y: easeInOutQuad1D(startPos.y, endPos.y, t)
-    };
-  };
-
   window.anim.animator = function(owner) {
-    var interpolators = { };
+    var easings = { };
 
     function anim(name, commit, seconds) {
       var animators = anim.animators();
@@ -78,7 +57,7 @@
 
       animators[name] = new Animator(valueBefore, owner[name], {
         seconds: seconds,
-        func: interpolators[name],
+        func: easings[name],
         atEnd: function () {
           var animators = anim.animators.peek();
           delete animators[name];
@@ -109,16 +88,23 @@
       });
     };
 
-    anim.interpolator = function(name, func) {
+    anim.easing = function(name, func) {
       if (func) {
-        interpolators[name] = func;
+        if ($ && !(func instanceof Function)) {
+          var easing = $.easing[func];
+          func = function(startValue, endValue, t) {
+            return easing(null, t, startValue, endValue - startValue, 1);
+          };
+        }
+
+        easings[name] = func;
         return undefined;
       }
       else {
-        return interpolators[name];
+        return easings[name];
       }
     };
 
     return anim;
   };
-})(window);
+})(window, $);
